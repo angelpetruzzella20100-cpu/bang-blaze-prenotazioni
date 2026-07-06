@@ -9,7 +9,6 @@
   <style>
     body { font-family: system-ui, sans-serif; }
     .neon { text-shadow: 0 0 20px #f97316; }
-    .card:active { transform: scale(0.95); }
   </style>
 </head>
 <body class="bg-black text-white min-h-screen">
@@ -20,31 +19,28 @@
       <div class="text-center mb-12">
         <h1 class="text-6xl font-black neon text-orange-500">BANG</h1>
         <p class="text-3xl font-bold">BLAZE 140K</p>
-        <p class="text-orange-400 mt-2">Prenotazioni Puff</p>
       </div>
-      <input id="username" placeholder="Nome Utente" class="w-full bg-zinc-800 p-6 rounded-2xl mb-4 text-xl focus:outline-none">
-      <input id="password" type="password" placeholder="Password" class="w-full bg-zinc-800 p-6 rounded-2xl mb-8 text-xl focus:outline-none">
+      <input id="username" placeholder="Nome Utente" class="w-full bg-zinc-800 p-6 rounded-2xl mb-4 text-xl">
+      <input id="password" type="password" placeholder="Password" class="w-full bg-zinc-800 p-6 rounded-2xl mb-8 text-xl">
       <button onclick="login()" class="w-full bg-gradient-to-r from-orange-500 to-red-500 py-7 rounded-3xl text-2xl font-bold">ENTRA</button>
     </div>
   </div>
 
   <!-- APP -->
   <div id="app" class="hidden">
-    <header class="bg-zinc-950 border-b border-orange-500/30 p-5 flex justify-between items-center sticky top-0 z-50">
+    <header class="bg-zinc-950 p-5 flex justify-between items-center border-b border-orange-500/30 sticky top-0">
       <div class="flex items-center gap-3 text-2xl font-black">🔥 BANG BLAZE</div>
       <div class="flex items-center gap-4">
-        <span id="current-user" class="text-sm font-medium"></span>
+        <span id="current-user" class="text-sm"></span>
         <button onclick="logout()" class="bg-red-600 px-6 py-3 rounded-2xl text-sm">ESCI</button>
       </div>
     </header>
 
-    <!-- CLIENTE -->
     <div id="client-view" class="p-5 max-w-2xl mx-auto">
       <h2 class="text-4xl font-bold text-center my-10">Scegli il Gusto</h2>
       <div id="flavors-grid" class="space-y-8"></div>
     </div>
 
-    <!-- ADMIN -->
     <div id="admin-view" class="hidden p-5 max-w-2xl mx-auto">
       <h2 class="text-3xl font-bold mb-8">Prenotazioni Attive</h2>
       <div id="bookings-list" class="space-y-6"></div>
@@ -52,8 +48,8 @@
   </div>
 
 <script>
-// ==================== CONFIGURA QUI ====================
-const adminWhatsApp = "393331234567"; // ← CAMBIA CON IL TUO NUMERO (con 39)
+// ==================== CONFIG ====================
+const instagramUser = "angel.petru_";   // Il tuo IG
 
 const flavors = [
   {id:1, name:"🍉 Watermelon Ice Cream + 🍓 Strawberry Lychee + 🍭 Gummy Bears", stock:2},
@@ -70,16 +66,17 @@ const flavors = [
   {id:12, name:"🍌 Banana Ice Cream + 🍓 Strawberry Ice Cream + 🍉 Watermelon Berries", stock:2}
 ];
 
-let bookings = JSON.parse(localStorage.getItem('bbV5')) || [];
+let bookings = JSON.parse(localStorage.getItem('bbV6')) || [];
 let currentUser = "";
 
 const coverImg = "https://bangvapes.com/wp-content/uploads/2026/01/bang-blaze-140k-cover-picture.png";
 
-function sendWhatsApp(booking) {
-  const text = `🔥 NUOVA PRENOTAZIONE BANG BLAZE\n\n👤 Utente: ${booking.user}\n🕒 ${booking.date}\n🍹 Gusto: ${booking.flavorName}`;
-  window.open(`https://wa.me/${adminWhatsApp}?text=${encodeURIComponent(text)}`, '_blank');
+function sendInstagramNotification(booking) {
+  const text = encodeURIComponent(`Nuova prenotazione Bang Blaze!\n\nUtente: ${booking.user}\nGusto: ${booking.flavorName}\nOra: ${booking.date}`);
+  window.open(`https://www.instagram.com/${instagramUser}/?text=${text}`, '_blank');
 }
 
+// Resto del codice (stesso di prima)
 function renderClient() {
   const grid = document.getElementById('flavors-grid');
   grid.innerHTML = flavors.map(f => {
@@ -94,7 +91,7 @@ function renderClient() {
             <span class="text-zinc-400">RIMASTE</span>
             <span class="text-5xl font-black ${left > 0 ? 'text-orange-400' : 'text-red-500'}">${left}/${f.stock}</span>
           </div>
-          <button onclick="book(${f.id})" class="w-full py-6 rounded-2xl text-xl font-bold ${left > 0 ? 'bg-orange-600 hover:bg-orange-500' : 'bg-zinc-700'}">
+          <button onclick="book(${f.id})" class="w-full py-6 rounded-2xl text-xl font-bold ${left > 0 ? 'bg-orange-600' : 'bg-zinc-700'}">
             ${left > 0 ? 'PRENOTA' : 'ESAURITO'}
           </button>
         </div>
@@ -105,15 +102,23 @@ function renderClient() {
 function book(id) {
   const f = flavors.find(x => x.id === id);
   const taken = bookings.filter(b => b.flavorId === id).length;
-  if (taken >= f.stock) return alert("❌ Questo gusto è esaurito!");
+  if (taken >= f.stock) return alert("Esaurito!");
 
-  const booking = { id: Date.now(), user: currentUser, flavorName: f.name, date: new Date().toLocaleString('it-IT') };
+  const booking = {
+    id: Date.now(),
+    user: currentUser,
+    flavorName: f.name,
+    date: new Date().toLocaleString('it-IT')
+  };
+
   bookings.push(booking);
-  localStorage.setItem('bbV5', JSON.stringify(bookings));
+  localStorage.setItem('bbV6', JSON.stringify(bookings));
 
   alert(`✅ Prenotato!\n${f.name}`);
 
-  if (confirm("Inviare notifica su WhatsApp?")) sendWhatsApp(booking);
+  if (confirm("Vuoi mandare notifica su Instagram?")) {
+    sendInstagramNotification(booking);
+  }
 
   renderClient();
   if (currentUser === 'admin') renderAdmin();
@@ -123,18 +128,18 @@ function renderAdmin() {
   const list = document.getElementById('bookings-list');
   list.innerHTML = bookings.map(b => `
     <div class="bg-zinc-900 p-6 rounded-3xl border border-zinc-700">
-      <div class="font-bold">${b.user}</div>
+      <div class="font-bold text-lg">${b.user}</div>
       <div class="text-sm text-zinc-500">${b.date}</div>
       <div class="mt-3 text-orange-300">${b.flavorName}</div>
-      <button onclick="cancel(${b.id})" class="mt-4 text-red-500 text-sm">Annulla</button>
+      <button onclick="cancel(${b.id})" class="mt-4 text-red-500">Annulla</button>
     </div>
   `).join('');
 }
 
 function cancel(id) {
-  if (confirm("Annullare prenotazione?")) {
+  if (confirm("Annullare?")) {
     bookings = bookings.filter(b => b.id !== id);
-    localStorage.setItem('bbV5', JSON.stringify(bookings));
+    localStorage.setItem('bbV6', JSON.stringify(bookings));
     renderClient();
     renderAdmin();
   }
