@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>BANG BLAZE 140K • PRENOTA</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    body { font-family: system-ui, sans-serif; }
+    .neon { text-shadow: 0 0 20px #f97316; }
+    .card:active { transform: scale(0.95); }
+  </style>
+</head>
+<body class="bg-black text-white min-h-screen">
+
+  <!-- LOGIN -->
+  <div id="login-screen" class="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-black to-zinc-950">
+    <div class="w-full max-w-md bg-zinc-900 p-10 rounded-3xl border border-orange-500/30">
+      <div class="text-center mb-12">
+        <h1 class="text-6xl font-black neon text-orange-500">BANG</h1>
+        <p class="text-3xl font-bold">BLAZE 140K</p>
+        <p class="text-orange-400 mt-2">Prenotazioni Puff</p>
+      </div>
+      <input id="username" placeholder="Nome Utente" class="w-full bg-zinc-800 p-6 rounded-2xl mb-4 text-xl focus:outline-none">
+      <input id="password" type="password" placeholder="Password" class="w-full bg-zinc-800 p-6 rounded-2xl mb-8 text-xl focus:outline-none">
+      <button onclick="login()" class="w-full bg-gradient-to-r from-orange-500 to-red-500 py-7 rounded-3xl text-2xl font-bold">ENTRA</button>
+    </div>
+  </div>
+
+  <!-- APP -->
+  <div id="app" class="hidden">
+    <header class="bg-zinc-950 border-b border-orange-500/30 p-5 flex justify-between items-center sticky top-0 z-50">
+      <div class="flex items-center gap-3 text-2xl font-black">🔥 BANG BLAZE</div>
+      <div class="flex items-center gap-4">
+        <span id="current-user" class="text-sm font-medium"></span>
+        <button onclick="logout()" class="bg-red-600 px-6 py-3 rounded-2xl text-sm">ESCI</button>
+      </div>
+    </header>
+
+    <!-- CLIENTE -->
+    <div id="client-view" class="p-5 max-w-2xl mx-auto">
+      <h2 class="text-4xl font-bold text-center my-10">Scegli il Gusto</h2>
+      <div id="flavors-grid" class="space-y-8"></div>
+    </div>
+
+    <!-- ADMIN -->
+    <div id="admin-view" class="hidden p-5 max-w-2xl mx-auto">
+      <h2 class="text-3xl font-bold mb-8">Prenotazioni Attive</h2>
+      <div id="bookings-list" class="space-y-6"></div>
+    </div>
+  </div>
+
+<script>
+// ==================== CONFIGURA QUI ====================
+const adminWhatsApp = "393331234567"; // ← CAMBIA CON IL TUO NUMERO (con 39)
+
+const flavors = [
+  {id:1, name:"🍉 Watermelon Ice Cream + 🍓 Strawberry Lychee + 🍭 Gummy Bears", stock:2},
+  {id:2, name:"🍑 Peach Blueberry Ice Cream + 🍉 Watermelon Strawberry + 🍋 Lemon", stock:2},
+  {id:3, name:"🍇 Grape Strawberry Ice Cream + 🥭 Mango Mixed Berries", stock:2},
+  {id:4, name:"🫐 Blueberry Ice + 🍑🥭 Peach Mango + 🍉 Watermelon Love 66", stock:2},
+  {id:5, name:"🫐 Blueberry Raspberry + 🥝 Kiwi Passion Fruit + 🥥 Guava Pineapple Coconut", stock:2},
+  {id:6, name:"🍓 Strawberry Watermelon Blueberry + 🍑 Peach Blackcurrant + 🍍 Pineapple", stock:2},
+  {id:7, name:"🍓🥝 Strawberry Kiwi Watermelon + 🫐 Blueberry Cherry Chewing Gum", stock:2},
+  {id:8, name:"🐉 Black Dragon Ice + 🍓 Strawberry Mamba + 🍇 Strawberry Grapes", stock:2},
+  {id:9, name:"🥭🍑 Mango Peach + 🫐 Blueberry Red Bull + 🍎🍇 Apple Grape", stock:2},
+  {id:10, name:"🥭 Triple Mango + 🍓 Raspberry + 🍋 Lemon Blueberry", stock:2},
+  {id:11, name:"🍋 Lemon Lime Aloe + 🍈 Mango Melon Watermelon + 🐉 Dragon Fruit", stock:2},
+  {id:12, name:"🍌 Banana Ice Cream + 🍓 Strawberry Ice Cream + 🍉 Watermelon Berries", stock:2}
+];
+
+let bookings = JSON.parse(localStorage.getItem('bbV5')) || [];
+let currentUser = "";
+
+const coverImg = "https://bangvapes.com/wp-content/uploads/2026/01/bang-blaze-140k-cover-picture.png";
+
+function sendWhatsApp(booking) {
+  const text = `🔥 NUOVA PRENOTAZIONE BANG BLAZE\n\n👤 Utente: ${booking.user}\n🕒 ${booking.date}\n🍹 Gusto: ${booking.flavorName}`;
+  window.open(`https://wa.me/${adminWhatsApp}?text=${encodeURIComponent(text)}`, '_blank');
+}
+
+function renderClient() {
+  const grid = document.getElementById('flavors-grid');
+  grid.innerHTML = flavors.map(f => {
+    const taken = bookings.filter(b => b.flavorId === f.id).length;
+    const left = f.stock - taken;
+    return `
+      <div class="bg-zinc-900 rounded-3xl overflow-hidden border border-zinc-700">
+        <img src="${coverImg}" class="w-full h-52 object-cover">
+        <div class="p-6">
+          <h3 class="font-bold text-xl leading-tight mb-6">${f.name}</h3>
+          <div class="flex justify-between mb-6">
+            <span class="text-zinc-400">RIMASTE</span>
+            <span class="text-5xl font-black ${left > 0 ? 'text-orange-400' : 'text-red-500'}">${left}/${f.stock}</span>
+          </div>
+          <button onclick="book(${f.id})" class="w-full py-6 rounded-2xl text-xl font-bold ${left > 0 ? 'bg-orange-600 hover:bg-orange-500' : 'bg-zinc-700'}">
+            ${left > 0 ? 'PRENOTA' : 'ESAURITO'}
+          </button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function book(id) {
+  const f = flavors.find(x => x.id === id);
+  const taken = bookings.filter(b => b.flavorId === id).length;
+  if (taken >= f.stock) return alert("❌ Questo gusto è esaurito!");
+
+  const booking = { id: Date.now(), user: currentUser, flavorName: f.name, date: new Date().toLocaleString('it-IT') };
+  bookings.push(booking);
+  localStorage.setItem('bbV5', JSON.stringify(bookings));
+
+  alert(`✅ Prenotato!\n${f.name}`);
+
+  if (confirm("Inviare notifica su WhatsApp?")) sendWhatsApp(booking);
+
+  renderClient();
+  if (currentUser === 'admin') renderAdmin();
+}
+
+function renderAdmin() {
+  const list = document.getElementById('bookings-list');
+  list.innerHTML = bookings.map(b => `
+    <div class="bg-zinc-900 p-6 rounded-3xl border border-zinc-700">
+      <div class="font-bold">${b.user}</div>
+      <div class="text-sm text-zinc-500">${b.date}</div>
+      <div class="mt-3 text-orange-300">${b.flavorName}</div>
+      <button onclick="cancel(${b.id})" class="mt-4 text-red-500 text-sm">Annulla</button>
+    </div>
+  `).join('');
+}
+
+function cancel(id) {
+  if (confirm("Annullare prenotazione?")) {
+    bookings = bookings.filter(b => b.id !== id);
+    localStorage.setItem('bbV5', JSON.stringify(bookings));
+    renderClient();
+    renderAdmin();
+  }
+}
+
+function login() {
+  const user = document.getElementById('username').value.trim();
+  if (!user) return alert("Inserisci nome utente");
+  currentUser = user;
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  document.getElementById('current-user').textContent = user;
+
+  if (user === 'admin' && document.getElementById('password').value === 'bangblaze2026') {
+    document.getElementById('client-view').classList.add('hidden');
+    document.getElementById('admin-view').classList.remove('hidden');
+    renderAdmin();
+  } else {
+    renderClient();
+  }
+}
+
+function logout() {
+  currentUser = "";
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('login-screen').classList.remove('hidden');
+}
+</script>
+</body>
+</html>
